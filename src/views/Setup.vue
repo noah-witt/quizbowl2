@@ -5,7 +5,6 @@
     <v-btn @click="removeRoom()">Remove Room</v-btn>
     <div v-for="room in rooms" :key="room.id">
       <v-text-field label="Room Number" v-model="room.number"></v-text-field>
-      {{ room.id }}
     </div>
     <hr />
     <h1>Teams</h1>
@@ -18,7 +17,14 @@
         v-model="school.numberOfTeams"
         type="number"
       ></v-text-field>
-      {{ school.id }}
+    </div>
+    <div>
+      <h2>Settings</h2>
+      <v-text-field
+        label="Number of Rounds"
+        v-model="rules.numberOfRounds"
+        type="number"
+      ></v-text-field>
     </div>
     <v-btn @click="submit()">Submit</v-btn>
   </div>
@@ -28,6 +34,7 @@
 import { useConfiguration } from "@/stores/Configuration";
 import { v4 as uuidv4 } from "uuid";
 import { reactive } from "vue";
+import { Ruleset } from "@/engine/Ruleset";
 interface School {
   name: string;
   numberOfTeams: number;
@@ -56,6 +63,7 @@ function RoomFactory(): Room {
 interface EventSetupData {
   rooms: Room[];
   schools: School[];
+  rules: Ruleset;
 }
 export default {
   name: "EventSetup",
@@ -63,6 +71,7 @@ export default {
     const temp: EventSetupData = {
       rooms: reactive([]),
       schools: reactive([]),
+      rules: new Ruleset(),
     };
     return reactive(temp);
   },
@@ -95,7 +104,7 @@ export default {
         roomStrings.push(room.number);
       }
       // @ts-expect-error Something weird
-      this.setStore(this.schools, roomStrings);
+      this.setStore(this.schools, roomStrings, this.rules);
       console.warn({ that: this });
       // @ts-expect-error Something weird
       this.$router.push("/generate");
