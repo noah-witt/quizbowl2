@@ -6,7 +6,7 @@ import { Team, TeamList } from "./Team";
 declare function Callback(match: Match, index: number): unknown;
 
 export class Round {
-  private matches: Match[] = [];
+  readonly matches: Match[] = [];
 
   getMatch(round: number): Match {
     return this.matches[round];

@@ -17,10 +17,10 @@ class RuleEnforcementException extends QuizbowlEngineException {
 
 export class Schedule {
   // TODO Implement schedule
-  private rounds: Round[];
-  private teams: TeamList;
-  private rooms: RoomList;
-  private ruleset: Ruleset;
+  readonly rounds: Round[];
+  readonly teams: TeamList;
+  readonly rooms: RoomList;
+  readonly ruleset: Ruleset;
 
   getRound(round: number): Round {
     return this.rounds[round];
