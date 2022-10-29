@@ -4,7 +4,7 @@
     <v-btn @click="addRoom()">Add Room</v-btn>
     <v-btn @click="removeRoom()">Remove Room</v-btn>
     <div v-for="room in rooms" :key="room.id">
-      <v-text-field label="Room Number" v-bind="room.number"></v-text-field>
+      <v-text-field label="Room Number" v-model="room.number"></v-text-field>
       {{ room.id }}
     </div>
     <hr />
@@ -12,10 +12,10 @@
     <v-btn @click="addSchool()">Add School</v-btn>
     <v-btn @click="removeSchool()">Remove School</v-btn>
     <div v-for="school in schools" :key="school.id">
-      <v-text-field label="School Name" v-bind="school.name"></v-text-field>
+      <v-text-field label="School Name" v-model="school.name"></v-text-field>
       <v-text-field
         label="Number Of Teams"
-        :v-bind="school.numberOfTeams"
+        v-model="school.numberOfTeams"
         type="number"
       ></v-text-field>
       {{ school.id }}
@@ -27,6 +27,7 @@
 <script lang="ts">
 import { useConfiguration } from "@/stores/Configuration";
 import { v4 as uuidv4 } from "uuid";
+import { reactive } from "vue";
 interface School {
   name: string;
   numberOfTeams: number;
@@ -60,10 +61,10 @@ export default {
   name: "EventSetup",
   data: () => {
     const temp: EventSetupData = {
-      rooms: [],
-      schools: [],
+      rooms: reactive([]),
+      schools: reactive([]),
     };
-    return temp;
+    return reactive(temp);
   },
   setup: () => {
     const configStore = useConfiguration();
@@ -73,11 +74,11 @@ export default {
   methods: {
     addRoom() {
       // @ts-expect-error Something weird
-      this.rooms.push(RoomFactory());
+      this.rooms.push(reactive(RoomFactory()));
     },
     addSchool() {
       // @ts-expect-error Something weird
-      this.schools.push(SchoolFactory());
+      this.schools.push(reactive(SchoolFactory()));
     },
     removeRoom() {
       // @ts-expect-error Something weird
