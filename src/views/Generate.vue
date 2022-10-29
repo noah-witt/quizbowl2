@@ -20,12 +20,10 @@ export default {
       console.info("Generating Schedule");
       const roomObjects = roomFactory(this.rooms);
       const teamObjects = TeamFactory(this.schools);
-      const ruleset = new Ruleset(); //TODO allow to configure
-      ruleset.numberOfRounds = 1; // TODO remove
       const schedule = ScheduleGenerator.generate(
         teamObjects,
         roomObjects,
-        ruleset
+        this.rules
       );
       console.info(schedule); //TODO set in store and then forward.
       this.commitResult(schedule);
@@ -41,6 +39,7 @@ export default {
     return {
       schools: configStore.getSchools,
       rooms: configStore.getRooms,
+      rules: configStore.getRules,
       commitResult: resultStore.set,
     };
   },
