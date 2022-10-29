@@ -54,6 +54,10 @@ export class RegularMatch extends Match {
   getTeams(): Team[] {
     return [this.teamA, this.teamB];
   }
+
+  getRoom(): Room {
+    return this.room;
+  }
 }
 
 export class ByeRound extends Match {
