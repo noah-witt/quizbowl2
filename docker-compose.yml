@@ -1,0 +1,9 @@
+version: '3.6'
+services:
+  web:
+    image:  ghcr.io/noah-witt/quizbowl2/web:latest
+    build:
+      context: .
+      target: production-stage
+    ports:
+      - 8484:80
