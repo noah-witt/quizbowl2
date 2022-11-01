@@ -2,33 +2,60 @@
   <div>
     <h1>Generating...</h1>
     <span>Please Wait. This may take several minutes.</span>
+    <v-alert prominent type="error" v-if="failed">
+      Failed to Generate Schedule
+      <router-link @click="work()" to="/generate">Retry</router-link> or
+      <router-link to="/">Reconfigure</router-link>
+      <v-divider></v-divider>
+      <small>
+        {{ errMsg }}
+      </small>
+    </v-alert>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 const WORK_DELAY_MS = 100;
 import { useConfiguration } from "@/stores/Configuration";
 import { roomFactory } from "@/engine/RoomFactory";
 import { TeamFactory } from "@/engine/TeamFactory";
-import { Ruleset } from "@/engine/Ruleset";
 import { ScheduleGenerator } from "@/engine/ScheduleGenerator";
 import { useResult } from "@/stores/Result";
-export default {
+import { defineComponent } from "vue";
+export default defineComponent({
   name: "ScheduleGenerator",
   methods: {
     work() {
-      console.info("Generating Schedule");
-      const roomObjects = roomFactory(this.rooms);
-      const teamObjects = TeamFactory(this.schools);
-      const schedule = ScheduleGenerator.generate(
-        teamObjects,
-        roomObjects,
-        this.rules
-      );
-      console.info(schedule); //TODO set in store and then forward.
-      this.commitResult(schedule);
-      this.$router.push("/result");
+      this.failed = false;
+      setTimeout(this.workInternal, WORK_DELAY_MS);
     },
+    workInternal() {
+      try {
+        const roomObjects = roomFactory(this.rooms);
+        const teamObjects = TeamFactory(this.schools);
+        const schedule = ScheduleGenerator.generate(
+          teamObjects,
+          roomObjects,
+          this.rules
+        );
+        this.failed = false;
+        this.commitResult(schedule);
+        this.$router.push("/result");
+      } catch (ex) {
+        this.failed = true;
+        if (ex instanceof Error) {
+          this.errMsg = ex.toString();
+        } else {
+          this.errMsg = "";
+        }
+      }
+    },
+  },
+  data: () => {
+    return {
+      failed: false,
+      errMsg: "",
+    };
   },
   mounted() {
     setTimeout(this.work, WORK_DELAY_MS);
@@ -43,7 +70,7 @@ export default {
       commitResult: resultStore.set,
     };
   },
-};
+});
 </script>
 
 <style></style>

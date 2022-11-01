@@ -25,6 +25,16 @@
         v-model="rules.numberOfRounds"
         type="number"
       ></v-text-field>
+      <v-text-field
+        label="Maximum Number Of Times A Team May Play the Same School (Set to zero for unlimited)"
+        v-model="rules.maxTimesAgainstSameSchool"
+        type="number"
+      ></v-text-field>
+      <v-text-field
+        label="Maximum Number Of Times A Team May Play In The Same Room (Set to zero for unlimited)"
+        v-model="rules.maxTimesInSameRoom"
+        type="number"
+      ></v-text-field>
     </div>
     <v-btn @click="submit()">Submit</v-btn>
   </div>
@@ -33,7 +43,7 @@
 <script lang="ts">
 import { useConfiguration } from "@/stores/Configuration";
 import { v4 as uuidv4 } from "uuid";
-import { reactive } from "vue";
+import { defineComponent, reactive } from "vue";
 import { Ruleset } from "@/engine/Ruleset";
 interface School {
   name: string;
@@ -65,7 +75,7 @@ interface EventSetupData {
   schools: School[];
   rules: Ruleset;
 }
-export default {
+export default defineComponent({
   name: "EventSetup",
   data: () => {
     const temp: EventSetupData = {
@@ -82,35 +92,28 @@ export default {
   computed: {},
   methods: {
     addRoom() {
-      // @ts-expect-error Something weird
       this.rooms.push(reactive(RoomFactory()));
     },
     addSchool() {
-      // @ts-expect-error Something weird
       this.schools.push(reactive(SchoolFactory()));
     },
     removeRoom() {
-      // @ts-expect-error Something weird
       this.rooms.pop();
     },
     removeSchool() {
-      // @ts-expect-error Something weird
       this.schools.pop();
     },
     submit() {
       const roomStrings = [];
-      // @ts-expect-error Something weird
       for (const room of this.rooms) {
         roomStrings.push(room.number);
       }
-      // @ts-expect-error Something weird
       this.setStore(this.schools, roomStrings, this.rules);
       console.warn({ that: this });
-      // @ts-expect-error Something weird
       this.$router.push("/generate");
     },
   },
-};
+});
 </script>
 
 <style></style>

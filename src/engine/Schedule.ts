@@ -1,5 +1,5 @@
+import { RegularMatch } from "./Match";
 import { QuizbowlEngineException } from "./QuizbowlEngineException";
-import { QuizbowlList } from "./QuizbowlList";
 import { Room, RoomList } from "./Room";
 import { Round } from "./Round";
 import { Ruleset } from "./Ruleset";
@@ -13,6 +13,21 @@ class RuleEnforcementException extends QuizbowlEngineException {
     super(message);
     this.name = "RuleEnforcementException";
   }
+}
+
+type SymbolMapping<U> = {
+  [key: symbol]: U;
+};
+
+type schoolLimitStruct = SymbolMapping<SymbolMapping<number>>;
+type roomLimitStruct = SymbolMapping<SymbolMapping<number>>;
+
+function safeGet<U>(map: SymbolMapping<U>, key: symbol, defaultValue: U): U {
+  // eslint-disable-next-line no-prototype-builtins
+  if (!map.hasOwnProperty(key)) {
+    map[key] = defaultValue;
+  }
+  return map[key];
 }
 
 export class Schedule {
@@ -86,12 +101,88 @@ export class Schedule {
     }
   }
 
+  /**
+   * Ensures that each team does not play a given school more than
+   * maxMeetings times
+   * @param maxMeetings the number of meetings
+   */
+  private ensureSchoolLimit(maxMeetings: number): void {
+    const teamMatchups: schoolLimitStruct = {};
+    for (const round of this.rounds) {
+      for (const match of round.matches) {
+        if (match instanceof RegularMatch) {
+          this.recordSchoolMeets(match, teamMatchups);
+        }
+      }
+    }
+    // @ts-expect-error Weird not iterable
+    for (const team of teamMatchups) {
+      for (const school of team) {
+        console.log(school);
+        if (school > maxMeetings)
+          throw new QuizbowlEngineException(
+            "Too many meetings against same school"
+          );
+      }
+    }
+  }
+
+  private recordSchoolMeets(
+    match: RegularMatch,
+    teamMatchups: schoolLimitStruct
+  ) {
+    const teams = match.getTeams();
+    const teamMatchupSchoolsA = safeGet(teamMatchups, teams[0].symbol, {});
+    safeGet(teamMatchupSchoolsA, teams[1].school.symbol, 0);
+    teamMatchupSchoolsA[teams[1].school.symbol] += 1;
+    const teamMatchupSchoolsB = safeGet(teamMatchups, teams[1].symbol, {});
+    safeGet(teamMatchupSchoolsB, teams[0].school.symbol, 0);
+    teamMatchupSchoolsB[teams[0].school.symbol] += 1;
+  }
+
+  /**
+   * Ensures that each team does not play in a given room more than the limit times
+   * @param maxRounds the number of meetings
+   */
+  private ensureRoomRounds(maxRounds: number): void {
+    const roomRounds: roomLimitStruct = {};
+    for (const round of this.rounds) {
+      for (const match of round.matches) {
+        if (match instanceof RegularMatch) {
+          this.recordRoomRounds(match, roomRounds);
+        }
+      }
+    }
+    // @ts-expect-error Weird not iterable
+    for (const team of roomRounds) {
+      for (const school of team) {
+        console.log(school);
+        if (school > maxRounds)
+          throw new QuizbowlEngineException("Too many rounds in the same room");
+      }
+    }
+  }
+
+  private recordRoomRounds(match: RegularMatch, roomRounds: schoolLimitStruct) {
+    const teams = match.getTeams();
+    const teamMatchupSchoolsA = safeGet(roomRounds, teams[0].symbol, {});
+    safeGet(teamMatchupSchoolsA, match.getRoom().symbol, 0);
+    teamMatchupSchoolsA[match.getRoom().symbol] += 1;
+    const teamMatchupSchoolsB = safeGet(roomRounds, teams[1].symbol, {});
+    safeGet(teamMatchupSchoolsB, match.getRoom().symbol, 0);
+    teamMatchupSchoolsB[match.getRoom().symbol] += 1;
+  }
+
   ensureValid() {
     if (this.ruleset.schoolCanNotPlaySelf) this.doSchoolsPlaySelf();
     if (this.ruleset.teamCanNotPlaySameTeamTwice)
       this.doesTeamPlaySameTeamTwice();
     if (this.ruleset.byeRoundAllowed)
       this.doesExceedByesPerTeam(this.ruleset.maxByesPerTeam);
+    if (this.ruleset.maxTimesAgainstSameSchool > 0)
+      this.ensureSchoolLimit(this.ruleset.maxTimesAgainstSameSchool);
+    if (this.ruleset.maxTimesInSameRoom)
+      this.ensureRoomRounds(this.ruleset.maxTimesInSameRoom);
   }
 
   forEach(callback: typeof Callback) {

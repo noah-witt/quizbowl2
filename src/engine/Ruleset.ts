@@ -4,4 +4,6 @@ export class Ruleset {
   byeRoundAllowed = true;
   maxByesPerTeam = 1;
   numberOfRounds = 6;
+  maxTimesAgainstSameSchool = 0;
+  maxTimesInSameRoom = 0; // TODO implement filter
 }
