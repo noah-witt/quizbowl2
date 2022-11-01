@@ -1,6 +1,11 @@
 <template>
   <div>
     <h1>Result</h1>
+    <v-alert prominent type="info">
+      If you do not like these results you can:
+      <router-link to="/generate">Regenerate</router-link> or
+      <router-link to="/">Reconfigure</router-link>
+    </v-alert>
     <h2>Teams</h2>
     <span v-for="(team, i) in schedule.teams" :key="i">
       {{ team.toString() }},
