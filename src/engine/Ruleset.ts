@@ -5,5 +5,5 @@ export class Ruleset {
   maxByesPerTeam = 1;
   numberOfRounds = 6;
   maxTimesAgainstSameSchool = 0;
-  maxTimesInSameRoom = 0; // TODO implement filter
+  maxTimesInSameRoom = 0;
 }

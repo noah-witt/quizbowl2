@@ -62,7 +62,7 @@ export class Schedule {
       round.forEach((match) => {
         if (match.isSameSchool()) {
           throw new RuleEnforcementException(
-            match.toString() + " has the same school competing against itself."
+            "team has the same school competing against itself."
           );
         }
       });
@@ -79,9 +79,7 @@ export class Schedule {
         );
       }
       if (new Set(opponents).size !== opponents.length) {
-        throw new RuleEnforcementException(
-          team.toString() + " plays the same team twice."
-        );
+        throw new RuleEnforcementException("team plays the same team twice.");
       }
     }
   }
@@ -93,9 +91,7 @@ export class Schedule {
         const match = round.getTeamMatch(team);
         if (match.isBye()) byeCount++;
         if (byeCount > maxByes) {
-          throw new RuleEnforcementException(
-            team.toString() + " has too many bye rounds."
-          );
+          throw new RuleEnforcementException("team has too many bye rounds.");
         }
       }
     }
@@ -115,13 +111,18 @@ export class Schedule {
         }
       }
     }
-    // @ts-expect-error Weird not iterable
-    for (const team of teamMatchups) {
-      for (const school of team) {
-        console.log(school);
-        if (school > maxMeetings)
+    for (const teamSymbol of Object.getOwnPropertySymbols(teamMatchups)) {
+      for (const schoolSymbol of Object.getOwnPropertySymbols(
+        teamMatchups[teamSymbol]
+      )) {
+        if (teamMatchups[teamSymbol][schoolSymbol] > maxMeetings)
           throw new QuizbowlEngineException(
-            "Too many meetings against same school"
+            "Too many meetings against same school " +
+              teamSymbol.toString() +
+              " " +
+              schoolSymbol.toString() +
+              " " +
+              teamMatchups[teamSymbol][schoolSymbol]
           );
       }
     }
@@ -132,12 +133,12 @@ export class Schedule {
     teamMatchups: schoolLimitStruct
   ) {
     const teams = match.getTeams();
-    const teamMatchupSchoolsA = safeGet(teamMatchups, teams[0].symbol, {});
-    safeGet(teamMatchupSchoolsA, teams[1].school.symbol, 0);
-    teamMatchupSchoolsA[teams[1].school.symbol] += 1;
-    const teamMatchupSchoolsB = safeGet(teamMatchups, teams[1].symbol, {});
-    safeGet(teamMatchupSchoolsB, teams[0].school.symbol, 0);
-    teamMatchupSchoolsB[teams[0].school.symbol] += 1;
+    const teamASchoolOps = safeGet(teamMatchups, teams[0].symbol, {});
+    safeGet(teamASchoolOps, teams[1].school.symbol, 0);
+    teamASchoolOps[teams[1].school.symbol] += 1;
+    const teamBSchoolOps = safeGet(teamMatchups, teams[1].symbol, {});
+    safeGet(teamBSchoolOps, teams[0].school.symbol, 0);
+    teamBSchoolOps[teams[0].school.symbol] += 1;
   }
 
   /**
@@ -153,11 +154,11 @@ export class Schedule {
         }
       }
     }
-    // @ts-expect-error Weird not iterable
-    for (const team of roomRounds) {
-      for (const school of team) {
-        console.log(school);
-        if (school > maxRounds)
+    for (const teamSymbol of Object.getOwnPropertySymbols(roomRounds)) {
+      for (const schoolSymbol of Object.getOwnPropertySymbols(
+        roomRounds[teamSymbol]
+      )) {
+        if (roomRounds[teamSymbol][schoolSymbol] > maxRounds)
           throw new QuizbowlEngineException("Too many rounds in the same room");
       }
     }
