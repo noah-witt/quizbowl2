@@ -9,7 +9,7 @@ export class Team {
   constructor(school: School, number: number) {
     this.school = school;
     this.number = number;
-    this.symbol = Symbol();
+    this.symbol = Symbol(this.toString());
   }
 
   toString(): string {

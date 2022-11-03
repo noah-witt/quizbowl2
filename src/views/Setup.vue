@@ -10,13 +10,18 @@
     <h1>Teams</h1>
     <v-btn @click="addSchool()">Add School</v-btn>
     <v-btn @click="removeSchool()">Remove School</v-btn>
+    <br />
+    <br />
     <div v-for="school in schools" :key="school.id">
-      <v-text-field label="School Name" v-model="school.name"></v-text-field>
-      <v-text-field
-        label="Number Of Teams"
-        v-model="school.numberOfTeams"
-        type="number"
-      ></v-text-field>
+      <v-row>
+        <v-text-field label="School Name" v-model="school.name"></v-text-field>
+        <v-spacer></v-spacer>
+        <v-text-field
+          label="Number Of Teams"
+          v-model="school.numberOfTeams"
+          type="number"
+        ></v-text-field>
+      </v-row>
     </div>
     <div>
       <h2>Settings</h2>

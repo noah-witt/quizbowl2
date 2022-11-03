@@ -4,7 +4,7 @@ export class School {
 
   constructor(name: string) {
     this.name = name;
-    this.symbol = Symbol();
+    this.symbol = Symbol(this.toString());
   }
 
   toString(): string {

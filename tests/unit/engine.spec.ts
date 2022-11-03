@@ -1,4 +1,5 @@
 import { RegularMatch } from "@/engine/Match";
+import { QuizbowlEngineException } from "@/engine/QuizbowlEngineException";
 import { roomFactory } from "@/engine/RoomFactory";
 import { Ruleset } from "@/engine/Ruleset";
 import { ScheduleGenerator } from "@/engine/ScheduleGenerator";
@@ -155,5 +156,118 @@ describe("Engine Testing", () => {
         expect.arrayContaining(rooms)
       );
     }
+  });
+});
+
+it("gen test room limit", () => {
+  const rooms = roomFactory(["A123", "b456"]);
+  const teams = TeamFactory([
+    { name: "a", numberOfTeams: 1 },
+    { name: "b", numberOfTeams: 1 },
+  ]);
+  const ruleset = new Ruleset();
+  ruleset.maxTimesInSameRoom = 3;
+  ruleset.teamCanNotPlaySameTeamTwice = false;
+  const schedule = ScheduleGenerator.generate(teams, rooms, ruleset);
+  schedule.ensureValid();
+  // should play in each room 50%
+  const counts: { [key: symbol]: number } = {};
+  const symbols: Set<symbol> = new Set();
+  for (const round of schedule.rounds) {
+    for (const match of round.matches) {
+      if (!(match instanceof RegularMatch)) {
+        throw new QuizbowlEngineException("Not the right match type");
+      }
+      const room = match.getRoom();
+      if (!Object.prototype.hasOwnProperty.call(counts, room.symbol)) {
+        counts[room.symbol] = 0;
+      }
+      counts[room.symbol] += 1;
+      symbols.add(room.symbol);
+    }
+  }
+
+  symbols.forEach((sym) => {
+    expect(counts[sym]).toEqual(3);
+  });
+});
+
+function matchUpCounter(
+  obj: { [key: symbol]: { [key: symbol]: number } },
+  a: symbol,
+  b: symbol
+) {
+  if (!Object.prototype.hasOwnProperty.call(obj, a)) {
+    obj[a] = {};
+  }
+  if (!Object.prototype.hasOwnProperty.call(obj[a], b)) {
+    obj[a][b] = 0;
+  }
+  obj[a][b] += 1;
+}
+
+it("gen test maxTimesAgainstSameSchool", () => {
+  const rooms = roomFactory([
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+  ]);
+  const teams = TeamFactory([
+    { name: "a", numberOfTeams: 2 },
+    { name: "b", numberOfTeams: 2 },
+    { name: "c", numberOfTeams: 2 },
+    { name: "d", numberOfTeams: 2 },
+    { name: "e", numberOfTeams: 2 },
+    { name: "f", numberOfTeams: 2 },
+    { name: "g", numberOfTeams: 2 },
+    { name: "h", numberOfTeams: 2 },
+    { name: "i", numberOfTeams: 2 },
+    { name: "j", numberOfTeams: 2 },
+    { name: "k", numberOfTeams: 2 },
+  ]);
+  const ruleset = new Ruleset();
+  ruleset.maxTimesAgainstSameSchool = 1;
+  ruleset.numberOfRounds = 4;
+  ruleset.teamCanNotPlaySameTeamTwice = true;
+  const schedule = ScheduleGenerator.generate(teams, rooms, ruleset);
+  schedule.ensureValid();
+  const counts: { [key: symbol]: { [key: symbol]: number } } = {};
+  const teamSymbols: Set<symbol> = new Set();
+  for (const round of schedule.rounds) {
+    for (const match of round.matches) {
+      if (!(match instanceof RegularMatch)) {
+        throw new QuizbowlEngineException("Not the right match type");
+      }
+      const teams = match.getTeams();
+      teamSymbols.add(teams[0].symbol);
+      teamSymbols.add(teams[1].symbol);
+      matchUpCounter(counts, teams[0].symbol, teams[1].school.symbol);
+      matchUpCounter(counts, teams[1].symbol, teams[0].school.symbol);
+    }
+  }
+
+  teamSymbols.forEach((sym) => {
+    teamSymbols.forEach((sym2) => {
+      if (Object.prototype.hasOwnProperty.call(counts[sym], sym2)) {
+        expect(counts[sym][sym2]).toEqual(1);
+      }
+    });
   });
 });
