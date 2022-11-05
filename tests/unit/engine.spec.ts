@@ -1,7 +1,10 @@
-import { RegularMatch } from "@/engine/Match";
+import { Match, RegularMatch } from "@/engine/Match";
 import { QuizbowlEngineException } from "@/engine/QuizbowlEngineException";
+import { RoomList } from "@/engine/Room";
 import { roomFactory } from "@/engine/RoomFactory";
+import { Round } from "@/engine/Round";
 import { Ruleset } from "@/engine/Ruleset";
+import { Schedule } from "@/engine/Schedule";
 import { ScheduleGenerator } from "@/engine/ScheduleGenerator";
 import { TeamFactory } from "@/engine/TeamFactory";
 
@@ -206,7 +209,7 @@ function matchUpCounter(
   obj[a][b] += 1;
 }
 
-it("gen test maxTimesAgainstSameSchool", () => {
+it("gen test maxTimesAgainstSameSchool 1", () => {
   const rooms = roomFactory([
     "1",
     "2",
@@ -236,38 +239,107 @@ it("gen test maxTimesAgainstSameSchool", () => {
     { name: "d", numberOfTeams: 2 },
     { name: "e", numberOfTeams: 2 },
     { name: "f", numberOfTeams: 2 },
-    { name: "g", numberOfTeams: 2 },
-    { name: "h", numberOfTeams: 2 },
-    { name: "i", numberOfTeams: 2 },
-    { name: "j", numberOfTeams: 2 },
-    { name: "k", numberOfTeams: 2 },
   ]);
   const ruleset = new Ruleset();
-  ruleset.maxTimesAgainstSameSchool = 1;
+  ruleset.maxTimesAgainstSameSchool = 0;
   ruleset.numberOfRounds = 4;
-  ruleset.teamCanNotPlaySameTeamTwice = true;
+  ruleset.teamCanNotPlaySameTeamTwice = false;
+  ruleset.byeRoundAllowed = true;
+  ruleset.schoolCanNotPlaySelf = false;
   const schedule = ScheduleGenerator.generate(teams, rooms, ruleset);
-  schedule.ensureValid();
-  const counts: { [key: symbol]: { [key: symbol]: number } } = {};
-  const teamSymbols: Set<symbol> = new Set();
-  for (const round of schedule.rounds) {
-    for (const match of round.matches) {
-      if (!(match instanceof RegularMatch)) {
-        throw new QuizbowlEngineException("Not the right match type");
-      }
-      const teams = match.getTeams();
-      teamSymbols.add(teams[0].symbol);
-      teamSymbols.add(teams[1].symbol);
-      matchUpCounter(counts, teams[0].symbol, teams[1].school.symbol);
-      matchUpCounter(counts, teams[1].symbol, teams[0].school.symbol);
-    }
-  }
+  // @ts-expect-error this is readonly but we are testing so just change it
+  schedule.rounds = [
+    new Round(teams, new RoomList(rooms), true),
+    new Round(teams, new RoomList(rooms), true),
+    new Round(teams, new RoomList(rooms), true),
+  ];
+  // @ts-expect-error this is readonly but we are testing so just change it
+  schedule.rounds[0].matches = [new RegularMatch(teams[0], teams[2], rooms[0])];
+  // @ts-expect-error this is readonly but we are testing so just change it
+  schedule.rounds[1].matches = [new RegularMatch(teams[0], teams[2], rooms[0])];
+  // @ts-expect-error this is readonly but we are testing so just change it
+  schedule.rounds[2].matches = [new RegularMatch(teams[0], teams[2], rooms[0])];
+  // @ts-expect-error This is a private member
+  schedule.ensureSchoolLimit(3);
+  let val = 2;
+  const t = () => {
+    // @ts-expect-error This is a private member
+    schedule.ensureSchoolLimit(val);
+  };
 
-  teamSymbols.forEach((sym) => {
-    teamSymbols.forEach((sym2) => {
-      if (Object.prototype.hasOwnProperty.call(counts[sym], sym2)) {
-        expect(counts[sym][sym2]).toEqual(1);
-      }
-    });
-  });
+  expect(t).toThrow(QuizbowlEngineException);
+  val = 1;
+  expect(t).toThrow(QuizbowlEngineException);
+});
+
+it("gen test maxTimesAgainstSameSchool 2", () => {
+  const rooms = roomFactory([
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+  ]);
+  const teams = TeamFactory([
+    { name: "a", numberOfTeams: 2 },
+    { name: "b", numberOfTeams: 2 },
+    { name: "c", numberOfTeams: 2 },
+    { name: "d", numberOfTeams: 2 },
+    { name: "e", numberOfTeams: 2 },
+    { name: "f", numberOfTeams: 2 },
+  ]);
+  const ruleset = new Ruleset();
+  ruleset.maxTimesAgainstSameSchool = 0;
+  ruleset.numberOfRounds = 4;
+  ruleset.teamCanNotPlaySameTeamTwice = false;
+  ruleset.byeRoundAllowed = true;
+  ruleset.schoolCanNotPlaySelf = false;
+  const schedule = ScheduleGenerator.generate(teams, rooms, ruleset);
+  // @ts-expect-error this is readonly but we are testing so just change it
+  schedule.rounds = [
+    new Round(teams, new RoomList(rooms), true),
+    new Round(teams, new RoomList(rooms), true),
+    new Round(teams, new RoomList(rooms), true),
+  ];
+  // @ts-expect-error this is readonly but we are testing so just change it
+  schedule.rounds[0].matches = [
+    new RegularMatch(teams[0], teams[2], rooms[0]),
+    new RegularMatch(teams[9], teams[7], rooms[0]),
+  ];
+  // @ts-expect-error this is readonly but we are testing so just change it
+  schedule.rounds[1].matches = [
+    new RegularMatch(teams[0], teams[2], rooms[0]),
+    new RegularMatch(teams[10], teams[6], rooms[0]),
+  ];
+  // @ts-expect-error this is readonly but we are testing so just change it
+  schedule.rounds[2].matches = [
+    new RegularMatch(teams[0], teams[2], rooms[0]),
+    new RegularMatch(teams[11], teams[5], rooms[0]),
+  ];
+  // @ts-expect-error This is a private member
+  schedule.ensureSchoolLimit(3);
+  let val = 2;
+  const t = () => {
+    // @ts-expect-error This is a private member
+    schedule.ensureSchoolLimit(val);
+  };
+
+  expect(t).toThrow(QuizbowlEngineException);
+  val = 1;
+  expect(t).toThrow(QuizbowlEngineException);
 });
