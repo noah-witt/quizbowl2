@@ -4,7 +4,7 @@ import { Ruleset } from "./Ruleset";
 import { Schedule } from "./Schedule";
 import { Team } from "./Team";
 
-const MAX_TRIES = 100000;
+const MAX_TRIES = 10000;
 
 export class ScheduleGenerator {
   static generate(
@@ -12,7 +12,7 @@ export class ScheduleGenerator {
     rooms: Room[],
     ruleset: Ruleset = new Ruleset()
   ): Schedule {
-    const errorTypes: Set<string> = new Set();
+    const errorCounts: Map<string, number> = new Map();
     for (let i = 0; i < MAX_TRIES; i++) {
       try {
         const schedule = new Schedule(teams, rooms, ruleset);
@@ -21,12 +21,12 @@ export class ScheduleGenerator {
       } catch (ex) {
         // @ts-expect-error it is unknown
         const errorString: string = ex.toString();
-        errorTypes.add(errorString);
+        errorCounts.set(errorString, (errorCounts.get(errorString) || 0) + 1);
       }
     }
     let errorStr = "Failed to generate schedule within try limit.\n";
-    errorTypes.forEach((val) => {
-      errorStr += val + "\n";
+    errorCounts.forEach((val, key) => {
+      errorStr += `${key}: ${val}` + "\n";
     });
     throw new QuizbowlEngineException(errorStr);
   }

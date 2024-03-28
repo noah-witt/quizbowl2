@@ -1,10 +1,9 @@
-import { Match, RegularMatch } from "@/engine/Match";
+import { RegularMatch } from "@/engine/Match";
 import { QuizbowlEngineException } from "@/engine/QuizbowlEngineException";
 import { RoomList } from "@/engine/Room";
 import { roomFactory } from "@/engine/RoomFactory";
 import { Round } from "@/engine/Round";
 import { Ruleset } from "@/engine/Ruleset";
-import { Schedule } from "@/engine/Schedule";
 import { ScheduleGenerator } from "@/engine/ScheduleGenerator";
 import { TeamFactory } from "@/engine/TeamFactory";
 
@@ -194,20 +193,6 @@ it("gen test room limit", () => {
     expect(counts[sym]).toEqual(3);
   });
 });
-
-function matchUpCounter(
-  obj: { [key: symbol]: { [key: symbol]: number } },
-  a: symbol,
-  b: symbol
-) {
-  if (!Object.prototype.hasOwnProperty.call(obj, a)) {
-    obj[a] = {};
-  }
-  if (!Object.prototype.hasOwnProperty.call(obj[a], b)) {
-    obj[a][b] = 0;
-  }
-  obj[a][b] += 1;
-}
 
 it("gen test maxTimesAgainstSameSchool 1", () => {
   const rooms = roomFactory([
