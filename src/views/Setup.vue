@@ -15,7 +15,6 @@
     <div v-for="school in schools" :key="school.id">
       <v-row>
         <v-text-field label="School Name" v-model="school.name"></v-text-field>
-        <v-spacer></v-spacer>
         <v-text-field
           label="Number Of Teams"
           v-model="school.numberOfTeams"
@@ -42,6 +41,10 @@
       ></v-text-field>
     </div>
     <v-btn @click="submit()">Submit</v-btn>
+    <br />
+    <br />
+    <v-btn @click="exportConfig()">Export Config</v-btn>
+    <v-btn @click="importConfig()">Import Config</v-btn>
   </div>
 </template>
 
@@ -50,6 +53,7 @@ import { useConfiguration } from "@/stores/Configuration";
 import { v4 as uuidv4 } from "uuid";
 import { defineComponent, reactive } from "vue";
 import { Ruleset } from "@/engine/Ruleset";
+import { ExportSystem } from "./export";
 interface School {
   name: string;
   numberOfTeams: number;
@@ -75,7 +79,7 @@ function RoomFactory(): Room {
   };
 }
 
-interface EventSetupData {
+export interface EventSetupData {
   rooms: Room[];
   schools: School[];
   rules: Ruleset;
@@ -90,9 +94,23 @@ export default defineComponent({
     };
     return reactive(temp);
   },
-  setup: () => {
+  setup() {
     const configStore = useConfiguration();
-    return { setStore: configStore.set };
+    return {
+      setStore: configStore.set,
+      getSchoolsStore: configStore.getSchools,
+      getRoomsStore: configStore.getRooms,
+      getRulesStore: configStore.getRules,
+    };
+  },
+  mounted() {
+    for (const school of this.getSchoolsStore) {
+      this.schools.push({ id: uuidv4(), ...school });
+    }
+    for (const room of this.getRoomsStore) {
+      this.rooms.push({ id: uuidv4(), number: room });
+    }
+    this.rules = this.getRulesStore;
   },
   computed: {},
   methods: {
@@ -116,6 +134,43 @@ export default defineComponent({
       this.setStore(this.schools, roomStrings, this.rules);
       console.warn({ that: this });
       this.$router.push("/generate");
+    },
+    async exportConfig() {
+      const config = {
+        schools: this.schools,
+        rooms: this.rooms,
+        rules: this.rules,
+      };
+      const jwt = await ExportSystem.exportConfig(config);
+      const dataStr = "data:text;charset=utf-8," + encodeURIComponent(jwt);
+      const downloadAnchorNode = document.createElement("a");
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "config.txt");
+      document.body.appendChild(downloadAnchorNode); // required for firefox
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    },
+    async importConfig() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".txt";
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            const contents = e.target?.result;
+            if (typeof contents === "string") {
+              const config = await ExportSystem.importConfig(contents);
+              this.schools = config.schools;
+              this.rooms = config.rooms;
+              this.rules = config.rules;
+            }
+          };
+          reader.readAsText(file);
+        }
+      };
+      input.click();
     },
   },
 });
